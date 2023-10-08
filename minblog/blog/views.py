@@ -1,10 +1,9 @@
-from django.http import HttpResponseRedirect
-from django.shortcuts import render
+from django.shortcuts import render,redirect
 from .models import Post
 from .forms import LoginForm, PostForm, SignUpForm
 from django.contrib import messages
 from django.contrib.auth import authenticate,login,logout
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import User,Group
 # from django.contrib.auth.decorators import login_required
 
 # -------------------------------------------------------|
@@ -31,17 +30,20 @@ def dashboard(request):
         gps = user.groups.all()
         return render(request,'blog/dahboard.html',{'posts':posts,'full_name':full_name,'groups':gps})
     else:
-        return HttpResponseRedirect('/login')
+        return redirect('/login')
 
 # Signup
 def user_signup(request):
     if request.method == "POST":
         form = SignUpForm(request.POST)
         if form.is_valid():
-            messages.success(request,'Congratulations !! You have become a author ✔✔👍')
-            group= Group.objects.get('Author')
-            user.groups.add(group)
             user = form.save()
+            messages.success(request,'Congratulations !! You have become a author ✔✔👍')
+            # user =User.objects.get()
+            group= Group.objects.all()
+            for i in group:
+                print(i)
+            # user.groups.add(group)
     else:
         form = SignUpForm()
     return render(request,'blog/signup.html',{'form':form})
@@ -58,24 +60,24 @@ def user_login(request):
                 if user is not None:
                     login(request,user)
                     messages.success(request,'Logged in Successfully')
-                    return HttpResponseRedirect('/dashboard/')
+                    return redirect('/dashboard/')
                 else:
                     messages.error(request,'username or password is invalid')
         else:
             form = LoginForm()
         return render(request,'blog/login.html',{'form':form})
     else:
-        return HttpResponseRedirect('/dashboard/')
+        return redirect('/dashboard/')
     
 # logout
 def user_logout(request):
     logout(request)
-    return HttpResponseRedirect('/')
+    return redirect('/')
 
 # Add a post
 def addPost(request):
     if request.user.is_authenticated:
-        if request.method == "Post":
+        if request.method == "POST":
             form = PostForm(request.POST)
             print(form)
             if form.is_valid:
@@ -89,12 +91,12 @@ def addPost(request):
             form = PostForm()
         return render(request,'blog/addpost.html',{'form':form})
     else:
-        return HttpResponseRedirect('/login/')
+        return redirect('/login/')
     
 # Update a Post
 def updatePost(request,id):
     if request.user.is_authenticated:
-        if request.method == "Post":
+        if request.method == "POST":
             pi = Post.objects.get(pk=id)
             form = PostForm(request.POST,instance=pi)
             if form.is_valid:
@@ -104,14 +106,16 @@ def updatePost(request,id):
             form = PostForm(instance=pi)
         return render(request,'blog/updatepost.html',{'form':form})
     else:
-        return HttpResponseRedirect('/login/')
+        return redirect('/login/')
     
 # Delete post
 def deletePost(request,id):
     if request.user.is_authenticated:
+        print(id,type())
         if request.method == "Post":
             pi = Post.objects.get(pk=id)
+            print(pi,id)
             pi.delete()
-            return HttpResponseRedirect('/dashboard/')
+            return redirect('dashboard')
     else:
-        return HttpResponseRedirect('/login/')
+        return redirect('login')
